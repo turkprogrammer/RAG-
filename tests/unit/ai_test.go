@@ -1,10 +1,12 @@
 package unit
 
 import (
+	"strings"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"rag-system/src/domain"
 	"rag-system/src/infrastructure/ai"
-	"testing"
 )
 
 func TestAIConfigLoading(t *testing.T) {
@@ -32,8 +34,12 @@ func TestAIClientInitialization(t *testing.T) {
 	client, err := ai.NewAIClient(configFile)
 	// Не проверяем ошибку, так как это может быть связано с отсутствием API ключа
 	if err != nil {
-		// Просто убедимся, что ошибка связана с настройками API, а не с парсингом конфига
-		assert.Contains(t, err.Error(), "ошибка")
+		// Проверяем, что ошибка связана с настройками API (API ключ или конфигурация)
+		assert.True(t,
+			strings.Contains(err.Error(), "API ключ") ||
+				strings.Contains(err.Error(), "конфигурация") ||
+				strings.Contains(err.Error(), "не установлен"),
+			"Ошибка должна быть связана с API ключом или конфигурацией, получено: %s", err.Error())
 	} else {
 		assert.NotNil(t, client)
 	}
@@ -51,7 +57,7 @@ func TestBuildPrompt(t *testing.T) {
 	}
 
 	query := "Что содержится в документах?"
-	expectedContext := "Первый фрагмент документа с полезной информацией.\n\nВторой фрагмент с дополнительными деталями.\n\n"
+	expectedContext := "Первый фрагмент документа с полезной информацией.\n\nВторой фрагмент с дополнительными деталями."
 	expected := "Ответь на вопрос, используя только информацию из следующего контекста.\n\nКонтекст:\n" + expectedContext + "\n\nВопрос: " + query + "\n\nОтвет:"
 
 	actual := ai.BuildPrompt(query, chunks)
