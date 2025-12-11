@@ -1,0 +1,31 @@
+PROPRIETARY LICENSE - FOR DEMONSTRATION PURPOSES ONLY
+
+Copyright (c) 2025 Роберт Юсупов (aka turkprogrammer)
+GitHub: https://github.com/turkprogrammer
+
+All Rights Reserved.
+
+ДАННОЕ ПРОГРАММНОЕ ОБЕСПЕЧЕНИЕ ПРЕДОСТАВЛЯЕТСЯ ТОЛЬКО ДЛЯ ДЕМОНСТРАЦИИ И ПРОСМОТРА.
+
+ЗАПРЕЩЕНО:
+- Использовать данный код в коммерческих или некоммерческих целях
+- Копировать, модифицировать, распространять или публиковать данный код
+- Создавать производные работы на основе данного кода
+- Использовать данный код в любых проектах без явного письменного разрешения автора
+
+РАЗРЕШЕНО:
+- Просматривать исходный код для ознакомления
+- Изучать архитектуру и подходы, использованные в проекте
+- Использовать идеи и концепции (но не сам код) в своих проектах
+
+Данный код предназначен исключительно для демонстрации архитектурных решений и подходов к реализации RAG системы.
+
+Для получения разрешения на использование кода, пожалуйста, свяжитесь с автором через GitHub: https://github.com/turkprogrammer
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

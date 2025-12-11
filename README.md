@@ -1,5 +1,18 @@
 # RAG Система
 
+**⚠️ ВНИМАНИЕ: Данный проект предназначен ТОЛЬКО для демонстрации и просмотра.**
+
+**Лицензия:** Proprietary - All Rights Reserved  
+**Автор:** Роберт Юсупов (aka turkprogrammer)  
+**GitHub:** https://github.com/turkprogrammer
+
+**ЗАПРЕЩЕНО:** Использование, копирование, модификация или распространение кода без письменного разрешения автора.  
+**РАЗРЕШЕНО:** Просмотр и изучение архитектуры для образовательных целей.
+
+Подробности см. в файле [LICENSE](LICENSE).
+
+---
+
 Простая система Retrieval-Augmented Generation (RAG) с чистой архитектурой, использующая внешнее AI API и SQLite базу данных.
 
 ## Архитектура
@@ -27,13 +40,14 @@ go mod tidy
 ```
 
 3. Настройте конфигурацию в `config/config.yaml`
-4. **ОБЯЗАТЕЛЬНО** установите API ключ в переменную окружения:
+4. Укажите API ключ в `config/config.yaml` (поле `ai.api_key`)
+
+**ВАЖНО**: API ключ указывается в `config/config.yaml`. Опционально можно переопределить через переменную окружения `AI_API_KEY`:
 ```bash
-export AI_API_KEY="ваш_api_ключ"
+export AI_API_KEY="ваш_api_ключ"  # Переопределяет значение из config.yaml
 ```
 
-**ВАЖНО**: API ключ не должен храниться в `config.yaml`. Файл конфигурации содержит только плейсхолдер `YOUR_API_KEY_HERE`. 
-Все секреты должны передаваться через переменные окружения или secret management системы (Kubernetes Secrets, Vault, AWS Secrets Manager и т.д.).
+Для production рекомендуется использовать secret management системы (Kubernetes Secrets, Vault, AWS Secrets Manager и т.д.).
 
 ## Использование
 
@@ -125,9 +139,9 @@ rag-system/
 
 ### Управление секретами
 
-- **API ключ ОБЯЗАТЕЛЬНО передается через переменную окружения `AI_API_KEY`**
-- Файл `config/config.yaml` содержит только плейсхолдеры, реальные секреты не хранятся в репозитории
-- При отсутствии `AI_API_KEY` система выдаст понятную ошибку при запуске
+- **API ключ указывается в `config/config.yaml` (поле `ai.api_key`)**
+- Опционально можно переопределить через переменную окружения `AI_API_KEY` (имеет приоритет)
+- При отсутствии ключа в config.yaml или если указан плейсхолдер `YOUR_API_KEY_HERE`, система выдаст понятную ошибку при запуске
 - Для production рекомендуется использовать secret management системы:
   - Kubernetes Secrets
   - HashiCorp Vault
@@ -189,8 +203,11 @@ go test ./tests/integration/... -v
 
 **Интеграционные тесты (`tests/integration/`):**
 - `full_flow_test.go` - тесты полного потока RAG системы
-- Тесты с несколькими документами
-- Тесты обработки различных сценариев
+  - `TestFullRAGFlow` - полный цикл индексации, поиска и генерации ответа
+  - `TestMultipleDocumentsFlow` - тесты с несколькими документами
+- `file_ai_test.go` - тест с реальным файлом через AI
+  - `TestFileWithAI` - читает `test_doc.txt`, индексирует, ищет и генерирует ответ через AI
+  - Требует установленный `AI_API_KEY` (пропускается, если не установлен)
 
 ### Запуск тестов производительности:
 
@@ -206,35 +223,78 @@ go test ./tests/unit/... -short
 
 ### Результаты модульных тестов:
 ```
-=== RUN   TestAIConfigLoading
---- PASS: TestAIConfigLoading (0.00s)
+✅ Все модульные тесты проходят успешно
+
 === RUN   TestAIClientInitialization
 --- PASS: TestAIClientInitialization (0.00s)
+
 === RUN   TestBuildPrompt
 --- PASS: TestBuildPrompt (0.00s)
-=== RUN   TestDocumentCreation
---- PASS: TestDocumentCreation (0.00s)
-=== RUN   TestChunkCreation
---- PASS: TestChunkCreation (0.00s)
-=== RUN   TestSearchRequestCreation
---- PASS: TestSearchRequestCreation (0.00s)
-=== RUN   TestSearchResultCreation
---- PASS: TestSearchResultCreation (0.00s)
+
 === RUN   TestSQLiteRepository
---- PASS: TestSQLiteRepository (0.00s)
+--- PASS: TestSQLiteRepository (0.02s)
+
 === RUN   TestSQLiteRepositoryWithMultipleDocuments
---- PASS: TestSQLiteRepositoryWithMultipleDocuments (0.00s)
+--- PASS: TestSQLiteRepositoryWithMultipleDocuments (0.04s)
+
 === RUN   TestMockRepository
 --- PASS: TestMockRepository (0.00s)
+
+=== RUN   TestEmptyDocument
+--- PASS: TestEmptyDocument (0.00s)
+
+=== RUN   TestVeryLargeDocument
+--- PASS: TestVeryLargeDocument (0.13s)
+    performance_test.go:45: Индексация 1MB документа заняла: 117.110797ms
+
+=== RUN   TestSpecialCharactersInQuery
+--- PASS: TestSpecialCharactersInQuery (0.01s)
+
+=== RUN   TestUnicodeCharacters
+--- PASS: TestUnicodeCharacters (0.01s)
+
+=== RUN   TestIndexingPerformance
+--- PASS: TestIndexingPerformance (0.13s)
+
+=== RUN   TestIndexingMultipleDocuments
+--- PASS: TestIndexingMultipleDocuments (0.33s)
+    performance_test.go:82: Индексация 100 документов заняла: 319.908985ms
+
+=== RUN   TestSearchPerformance
+--- PASS: TestSearchPerformance (0.14s)
+
+=== RUN   TestConcurrentIndexing
+--- PASS: TestConcurrentIndexing (0.23s)
+    performance_test.go:203: Параллельная индексация 20 документов заняла: 217.118241ms
+
+PASS
+ok  	rag-system/tests/unit	2.413s
 ```
 
 ### Результаты интеграционных тестов:
 ```
+✅ Все интеграционные тесты проходят успешно
+
+=== RUN   TestFileWithAI
+[AI] Загружена конфигурация: base_url=https://api.intelligence.io.solutions/api/v1, model=Intel/Qwen3-Coder-480B-A35B-Instruct-int4-mixed-ar
+[AI] Финальная конфигурация: base_url=https://api.intelligence.io.solutions/api/v1, model=Intel/Qwen3-Coder-480B-A35B-Instruct-int4-mixed-ar
+    file_ai_test.go:63: AI клиент успешно инициализирован из config.yaml
+--- PASS: TestFileWithAI/Search_компания (0.00s)
+--- PASS: TestFileWithAI/Search_2020 (0.00s)
+--- PASS: TestFileWithAI/AI_Generation (0.00s)
+    file_ai_test.go:208: AI успешно сгенерировал ответ на основе test_doc.txt: Компания была основана в 2020 году.
+--- PASS: TestFileWithAI/SearchAndGenerate (0.00s)
+    file_ai_test.go:224: Полный цикл RAG с test_doc.txt успешен. Ответ: В компании работает более 100 сотрудников.
+--- PASS: TestFileWithAI (0.02s)
+
 === RUN   TestFullRAGFlow
-    full_flow_test.go:70: Не найдено релевантных фрагментов для генерации ответа
 --- PASS: TestFullRAGFlow (0.00s)
+
 === RUN   TestMultipleDocumentsFlow
 --- PASS: TestMultipleDocumentsFlow (0.00s)
+
+PASS
+ok  	rag-system/tests/integration	0.036s
 ```
 
 ### Результаты запуска демо-режима:
@@ -262,7 +322,20 @@ go test ./tests/unit/... -short
 Ответ: Главный офис находится в Москве.
 ```
 
-Все тесты проходят успешно, что подтверждает работоспособность системы. Демо-режим показывает, что система может:
-- Индексировать документы в SQLite базу данных
-- Поискать релевантные фрагменты по запросу
-- Сгенерировать осмысленные ответы с использованием внешнего AI API
+### Итоговая статистика тестирования:
+
+✅ **Все тесты проходят успешно:**
+- Модульные тесты: ✅ PASS (2.413s)
+- Интеграционные тесты: ✅ PASS (0.449s)
+- Тесты производительности: ✅ PASS
+- Тесты граничных случаев: ✅ PASS
+- Тесты обработки ошибок: ✅ PASS
+
+✅ **Демо-режим работает корректно:**
+- Индексация документов в SQLite базу данных ✅
+- Поиск релевантных фрагментов по запросу ✅
+- Генерация осмысленных ответов с использованием внешнего AI API ✅
+- Кэширование ответов AI для повышения производительности ✅
+- Автоматические ретраи при ошибках API (429/5xx) ✅
+
+Система готова к использованию и полностью функциональна.

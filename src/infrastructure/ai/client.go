@@ -66,30 +66,36 @@ func NewAIClient(configPath string) (*AIClient, error) {
 		return nil, fmt.Errorf("не удалось загрузить конфигурацию: %w", err)
 	}
 
-	// Проверяем и приоритезируем переменные окружения
-	// API ключ ОБЯЗАТЕЛЬНО должен быть установлен через переменную окружения
-	apiKey := os.Getenv("AI_API_KEY")
-	if apiKey == "" {
-		// Проверяем, что в YAML не остался реальный ключ (должен быть только плейсхолдер)
-		if config.AI.APIKey == "" || config.AI.APIKey == "YOUR_API_KEY_HERE" {
-			return nil, fmt.Errorf("API ключ не установлен: необходимо установить переменную окружения AI_API_KEY. " +
-				"Не храните секреты в config.yaml, используйте переменные окружения или secret management системы")
-		}
-		// Если в YAML обнаружен реальный ключ (не плейсхолдер), выдаем предупреждение
-		// но все равно требуем env переменную для безопасности
-		return nil, fmt.Errorf("API ключ должен быть установлен через переменную окружения AI_API_KEY, " +
-			"а не через config.yaml. Обнаружено значение в config.yaml - это небезопасно. " +
-			"Установите: export AI_API_KEY=\"ваш_ключ\"")
+	// Создаем logger для отладки
+	logger := log.New(os.Stderr, "[AI] ", log.LstdFlags|log.Lshortfile)
+	logger.Printf("Загружена конфигурация: base_url=%s, model=%s", config.AI.BaseURL, config.AI.Model)
+
+	// Используем ключ из config.yaml (переменная окружения AI_API_KEY может переопределить, но не обязательна)
+	apiKey := config.AI.APIKey
+	if envKey := os.Getenv("AI_API_KEY"); envKey != "" {
+		// Переменная окружения имеет приоритет и переопределяет значение из config.yaml
+		apiKey = envKey
+		logger.Printf("API ключ переопределен через переменную окружения AI_API_KEY")
 	}
-	// Приоритет: env переменная всегда перезаписывает значение из YAML
+
+	// Проверяем, что ключ установлен и не является плейсхолдером
+	if apiKey == "" || apiKey == "YOUR_API_KEY_HERE" {
+		return nil, fmt.Errorf("API ключ не установлен: укажите реальный ключ в config.yaml (поле ai.api_key). " +
+			"Опционально можно переопределить через переменную окружения AI_API_KEY")
+	}
+
 	config.AI.APIKey = apiKey
 
 	if model := os.Getenv("AI_MODEL"); model != "" {
 		config.AI.Model = model
+		logger.Printf("Модель переопределена через переменную окружения AI_MODEL: %s", model)
 	}
 	if baseURL := os.Getenv("AI_BASE_URL"); baseURL != "" {
 		config.AI.BaseURL = baseURL
+		logger.Printf("BaseURL переопределен через переменную окружения AI_BASE_URL: %s", baseURL)
 	}
+
+	logger.Printf("Финальная конфигурация: base_url=%s, model=%s", config.AI.BaseURL, config.AI.Model)
 
 	// Валидация обязательных параметров с явными ошибками
 	if config.AI.BaseURL == "" {
@@ -122,8 +128,6 @@ func NewAIClient(configPath string) (*AIClient, error) {
 	httpClient := &http.Client{
 		Timeout: time.Duration(config.AI.TimeoutSecs) * time.Second,
 	}
-
-	logger := log.New(os.Stderr, "[AI] ", log.LstdFlags|log.Lshortfile)
 
 	return &AIClient{
 		config:     config,
