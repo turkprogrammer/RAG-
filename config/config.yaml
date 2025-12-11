@@ -1,0 +1,15 @@
+# Все настройки можно переопределить через переменные окружения
+
+ai:
+  base_url: "https://your-ai-api.com/v1"
+  # API ключ лучше передавать через переменную окружения AI_API_KEY
+  api_key: "your-production-key"
+  model: "your-model-name"
+  timeout: 30
+  max_tokens: 500
+  temperature: 0.1     # Низкая температура для более предсказуемых результатов
+
+# Примеры переменных окружения для production:
+# export AI_API_KEY="your-production-key"
+# export AI_MODEL="your-model-name"
+# export AI_BASE_URL="https://your-ai-api.com/v1"
