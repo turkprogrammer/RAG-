@@ -1,7 +1,9 @@
 package mocks
 
 import (
+	"fmt"
 	"rag-system/src/domain"
+	"strings"
 )
 
 // MockDocumentRepository имитация репозитория для тестирования
@@ -39,12 +41,12 @@ func (m *MockDocumentRepository) SaveDocument(doc domain.Document) error {
 			end = len(content)
 		}
 
-		chunkID := doc.ID + "_chunk_" + string(rune(len(chunks)))
+		chunkID := fmt.Sprintf("%s_chunk_%d", doc.ID, len(chunks))
 		chunk := domain.Chunk{
 			ID:         chunkID,
 			DocumentID: doc.ID,
 			Content:    content[i:end],
-			Similarity: 0.5, // Для тестов устанавливаем произвольное значение
+			Similarity: 0.5, // Будет пересчитано при поиске
 		}
 		chunks = append(chunks, chunk)
 	}
@@ -58,20 +60,64 @@ func (m *MockDocumentRepository) FindRelevantChunks(query string, limit int, thr
 		return m.FindRelevantChunksFn(query, limit, threshold)
 	}
 
-	// Возвращаем все фрагменты из всех документов для простоты тестирования
-	var allChunks []domain.Chunk
-	for _, chunks := range m.Chunks {
-		for _, chunk := range chunks {
-			allChunks = append(allChunks, chunk)
+	// Имитируем реальный поиск: фильтруем по содержимому и вычисляем similarity
+	query = strings.ToLower(strings.TrimSpace(query))
+	queryWords := strings.Fields(query)
+
+	var matchingChunks []domain.Chunk
+
+	// Если запрос пустой, возвращаем все фрагменты
+	if query == "" {
+		for _, chunks := range m.Chunks {
+			for _, chunk := range chunks {
+				chunk.Similarity = 0.5
+				matchingChunks = append(matchingChunks, chunk)
+			}
+		}
+	} else {
+		// Ищем фрагменты, содержащие слова запроса
+		for _, chunks := range m.Chunks {
+			for _, chunk := range chunks {
+				contentLower := strings.ToLower(chunk.Content)
+
+				// Вычисляем similarity как долю найденных слов
+				matches := 0
+				for _, word := range queryWords {
+					if strings.Contains(contentLower, word) {
+						matches++
+					}
+				}
+
+				if len(queryWords) > 0 {
+					chunk.Similarity = float64(matches) / float64(len(queryWords))
+				} else {
+					chunk.Similarity = 0.0
+				}
+
+				// Добавляем только если similarity >= threshold или threshold <= 0
+				if threshold <= 0 || chunk.Similarity >= threshold {
+					matchingChunks = append(matchingChunks, chunk)
+				}
+			}
+		}
+
+		// Сортируем по similarity (лучшие результаты первыми)
+		// Простая сортировка пузырьком для небольшого количества данных
+		for i := 0; i < len(matchingChunks)-1; i++ {
+			for j := i + 1; j < len(matchingChunks); j++ {
+				if matchingChunks[i].Similarity < matchingChunks[j].Similarity {
+					matchingChunks[i], matchingChunks[j] = matchingChunks[j], matchingChunks[i]
+				}
+			}
 		}
 	}
 
 	// Ограничиваем результат в соответствии с лимитом
-	if limit > 0 && len(allChunks) > limit {
-		allChunks = allChunks[:limit]
+	if limit > 0 && len(matchingChunks) > limit {
+		matchingChunks = matchingChunks[:limit]
 	}
 
-	return allChunks, nil
+	return matchingChunks, nil
 }
 
 func (m *MockDocumentRepository) GetAllDocuments() ([]domain.Document, error) {
