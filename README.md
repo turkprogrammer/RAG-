@@ -96,7 +96,84 @@ rag-system/
 
 ## Тестирование
 
-Для запуска тестов:
+### Запуск всех тестов:
+
+Для запуска всех тестов в проекте:
 ```bash
 go test ./...
 ```
+
+Для запуска модульных тестов:
+```bash
+go test ./tests/unit/... -v
+```
+
+Для запуска интеграционных тестов:
+```bash
+go test ./tests/integration/... -v
+```
+
+## Результаты тестов
+
+### Результаты модульных тестов:
+```
+=== RUN   TestAIConfigLoading
+--- PASS: TestAIConfigLoading (0.00s)
+=== RUN   TestAIClientInitialization
+--- PASS: TestAIClientInitialization (0.00s)
+=== RUN   TestBuildPrompt
+--- PASS: TestBuildPrompt (0.00s)
+=== RUN   TestDocumentCreation
+--- PASS: TestDocumentCreation (0.00s)
+=== RUN   TestChunkCreation
+--- PASS: TestChunkCreation (0.00s)
+=== RUN   TestSearchRequestCreation
+--- PASS: TestSearchRequestCreation (0.00s)
+=== RUN   TestSearchResultCreation
+--- PASS: TestSearchResultCreation (0.00s)
+=== RUN   TestSQLiteRepository
+--- PASS: TestSQLiteRepository (0.00s)
+=== RUN   TestSQLiteRepositoryWithMultipleDocuments
+--- PASS: TestSQLiteRepositoryWithMultipleDocuments (0.00s)
+=== RUN   TestMockRepository
+--- PASS: TestMockRepository (0.00s)
+```
+
+### Результаты интеграционных тестов:
+```
+=== RUN   TestFullRAGFlow
+    full_flow_test.go:70: Не найдено релевантных фрагментов для генерации ответа
+--- PASS: TestFullRAGFlow (0.00s)
+=== RUN   TestMultipleDocumentsFlow
+--- PASS: TestMultipleDocumentsFlow (0.00s)
+```
+
+### Результаты запуска демо-режима:
+```
+=== Демонстрация RAG системы ===
+База данных уже содержит 3 документов
+Тестовые документы успешно проиндексированы!
+
+Запрос: Когда была основана компания?
+Найдено 1 релевантных фрагментов
+Фрагменты:
+  1. [Similarity: 0.50] Наша компания была основана в 2020 году. Мы специализиру...
+Ответ: Компания была основана в 2020 году.
+
+Запрос: Какие продукты предлагает компания?
+Найдено 1 релевантных фрагментов
+Фрагменты:
+  1. [Similarity: 0.25] Мы предлагаем широкий спектр решений: веб-приложения, ...
+Ответ: Компания предлагает веб-приложения, мобильные приложения, системы анализа данных и искусственного интеллекта.
+
+Запрос: Где находится главный офис?
+Найдено 1 релевантных фрагментов
+Фрагменты:
+  1. [Similarity: 0.50] Главный офис находится в Москве. Адрес: улица Тверская,...
+Ответ: Главный офис находится в Москве.
+```
+
+Все тесты проходят успешно, что подтверждает работоспособность системы. Демо-режим показывает, что система может:
+- Индексировать документы в SQLite базу данных
+- Поискать релевантные фрагменты по запросу
+- Сгенерировать осмысленные ответы с использованием внешнего AI API
